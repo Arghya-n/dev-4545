@@ -66,7 +66,7 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 builder.Services.AddAppDI(builder.Configuration);
 
-var jwtKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY") ?? builder.Configuration["Jwt:Key"];
+var jwtKey = builder.Configuration["Jwt:Key"];
 
 if (string.IsNullOrEmpty(jwtKey))
 
@@ -104,6 +104,25 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
     });
 
+var allowedOrigin = builder.Configuration["Cors:url"];
+
+if (string.IsNullOrWhiteSpace(allowedOrigin))
+{
+    throw new InvalidOperationException("CORS origin is not configured. Please set 'Cors:url' in appsettings.json or environment variables.");
+}
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactApp", policy =>
+    {
+        policy.WithOrigins(allowedOrigin)
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
+
+
 
 
 var app = builder.Build();
@@ -112,7 +131,7 @@ var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 
 {
 
@@ -129,6 +148,9 @@ app.UseExceptionHandler(_ => { });
 
 
 app.UseHttpsRedirection();
+
+app.UseCors("AllowReactApp");
+
 
 app.UseAuthentication();
 

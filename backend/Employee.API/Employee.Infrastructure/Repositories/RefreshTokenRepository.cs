@@ -33,9 +33,8 @@ namespace Employee.Infrastructure.Repositories
             var accessTokenService = new AccessTokenService(_configuration);
             var user = await dbContext.Employees.FirstOrDefaultAsync(x => x.EmployeeId == employee.EmployeeId);
             var JwtSecurity = await accessTokenService.GenerateToken(user);
-           // string AccessToken= new JwtSecurityTokenHandler().WriteToken(JwtSecurity);
 
-            return new JwtSecurityTokenHandler().WriteToken(JwtSecurity); ;
+            return new JwtSecurityTokenHandler().WriteToken(JwtSecurity);
         }
     }
 }

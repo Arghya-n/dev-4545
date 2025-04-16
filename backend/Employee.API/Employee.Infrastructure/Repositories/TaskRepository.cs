@@ -1,13 +1,11 @@
-﻿
-
-using Employee.Core.Entities;
+﻿using Employee.Core.Entities;
 using Employee.Core.Interfaces;
 using Employee.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Employee.Infrastructure.Repositories
 {
-    public class TaskRepository(AppDbContext dbContext): ITaskRepository
+    public class TaskRepository(AppDbContext dbContext): ITasksRepository
     {
         public async Task<IEnumerable<TaskEntity>> GetAllTasks()
         {
@@ -15,20 +13,22 @@ namespace Employee.Infrastructure.Repositories
             return tasks;
         }
 
-        public async Task<TaskEntity> GetTaskByIdAsync(Guid Id)
+        public async Task<IEnumerable<TaskEntity>> GetTaskByEmployeeIdAsync(Guid EmployeeId)
         {
-            var result= await dbContext.Tasks.FirstOrDefaultAsync(x => x.TaskId == Id);
+            var result = await dbContext.Tasks.
+                Where(x => x.EmployeeId == EmployeeId).
+                ToListAsync();
             return result;
         }
         public async Task<TaskEntity> AddTaskAsync(TaskEntity taskEntity)
         {
             taskEntity.TaskId = Guid.NewGuid();
             await dbContext.Tasks.AddAsync(taskEntity);
-            dbContext.SaveChanges();
+            await dbContext.SaveChangesAsync();
             return taskEntity;
         }
 
-        public async Task<TaskEntity> UpdateTask(Guid id, TaskEntity taskEntity)
+        public async Task<TaskEntity?> UpdateTask(Guid id, TaskEntity taskEntity)
         {
             var data = await dbContext.Tasks.FirstOrDefaultAsync(x => x.TaskId == id);
             if (data != null)

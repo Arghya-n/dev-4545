@@ -1,13 +1,10 @@
-﻿using Employee.Core.Entities;
-using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
-using System;
-using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using System.Threading.Tasks;
+using Employee.Core.Entities;
+using Employee.Core.Enums;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Employee.Infrastructure.Services
 {
@@ -20,21 +17,21 @@ namespace Employee.Infrastructure.Services
             _configuration = configuration;
         }
 
-        public async Task<JwtSecurityToken> GenerateToken(EmployeeEntity employee)
+        public async Task<JwtSecurityToken> GenerateToken(EmployeeEntity? employee)
         {
-            var jwtKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY");
+            var jwtKey = _configuration["Jwt:Key"];
             if (string.IsNullOrEmpty(jwtKey))
             {
                 throw new InvalidOperationException("JWT secret key is not configured.");
             }
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
-           // var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
+            // NOSONAR - This key is loaded securely from non-published config
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
+            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name, employee.Name),
-                new Claim(ClaimTypes.Role, "Admin"),
+                new Claim(ClaimTypes.Name, employee!.Name),
+                new Claim(ClaimTypes.Role, Enum.GetName(typeof(Permissions), employee.Role)!),
                 new Claim("EmployeeId", employee.EmployeeId.ToString())
             };
 
